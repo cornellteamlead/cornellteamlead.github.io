@@ -11,8 +11,8 @@
   "use strict";
 
   // ---- Fill these two in (Supabase → Project Settings → API) ----
-  const SUPABASE_URL = "";       // e.g. "https://abcdefgh.supabase.co"
-  const SUPABASE_ANON_KEY = "";  // the long "anon public" key
+  const SUPABASE_URL = "https://atfmuwyvdqqfxxuxxgdn.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF0Zm11d3l2ZHFxZnh4dXh4Z2RuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5OTA0NTMsImV4cCI6MjEwMDU2NjQ1M30.fVQnk5GcM2BggEZQtKMsvK8zYJ4RYj3U_PXAQQNddA4";
   // ---------------------------------------------------------------
 
   const TABLE = "board";
