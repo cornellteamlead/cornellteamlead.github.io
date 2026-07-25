@@ -289,18 +289,17 @@ th.check-head { text-align: center; white-space: normal; }
 main { padding: 12px 16px 24px; }
 .board-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 600px);
+  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
+/* Attendings, Residents, CRNAs all on the same level */
 .rosters {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   align-items: start;
 }
-/* Attendings spans full width; Residents + CRNAs sit side by side below it */
-.rosters > section:first-child { grid-column: 1 / -1; }
 
 .panel {
   background: var(--surface);
@@ -518,12 +517,15 @@ th.row-actions-head { width: 44px; }
 }
 
 /* ---------- Responsive layout ---------- */
-@media (max-width: 900px) {
+@media (max-width: 1150px) {
   .board-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .rosters { grid-template-columns: 1fr 1fr; }
 }
 
 /* ---------- Mobile ---------- */
-@media (max-width: 620px) {
+@media (max-width: 520px) {
   .rosters { grid-template-columns: 1fr; }
   .app-header { padding: 14px 16px; }
   .toolbar { padding: 10px 16px; }

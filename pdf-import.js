@@ -206,7 +206,9 @@
       return disp(pick);
     };
     const attendings = rawAttendings.map((r) => ({ role: r.role, name: canonName(r.name) }));
-    const residents = rawResidents.map((r) => ({ role: r.role, name: canonName(r.name) }));
+    const residents = rawResidents
+      .filter((r) => !/^TL$/i.test((r.role || "").trim())) // Team Lead isn't a staffing resident
+      .map((r) => ({ role: r.role, name: canonName(r.name) }));
 
     // Build the board from the canonical room list, entirely from the directory.
     const rooms = ROOMS_CANON.map((R) => {

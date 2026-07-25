@@ -587,6 +587,23 @@ function transferLateStaff() {
   toast(`Transferred late staff into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
+/* ---- Transfer on-call staff into 5 PM: on-call residents (S1/S2/S4/S5/R1-R5,
+   i.e. every roster resident that isn't an R6 pull-in) plus the late CRNAs. */
+function transferOnCallStaff() {
+  const onCallRes = data.residents.filter((r) => r.name && !/^R6/i.test((r.role || "").trim())).map((r) => r.name);
+  const pool = [...onCallRes, ...rosterNames("crnas")];
+  let n = 0;
+  data.main.forEach((r) => {
+    const keep = cellNames(r.staff).filter((name) => pool.some((c) => nameMatch(c, name)));
+    if (keep.length) { r.fivepm = keep.join(", "); n++; }
+  });
+  saveTable("main");
+  renderTable("main");
+  renderStats();
+  syncStuckResidents();
+  toast(`Transferred on-call staff into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
+}
+
 /* ---- Remove attendings not on the Attendings (call) roster ---- */
 function removeNonCallAttendings() {
   const call = rosterNames("attendings");
@@ -604,19 +621,23 @@ function removeNonCallAttendings() {
 
 /* ---- Autofill roster room columns from the Room Assignments ---- */
 function updateRostersFromRooms() {
+  syncStuckResidents(); // pull in any new non-call residents now sitting in a 5 PM slot
   data.attendings.forEach((row) => {
     if (!row.name) return;
     const rooms = data.main.filter((m) => cellNames(m.attending).some((n) => nameMatch(n, row.name))).map((m) => m.room);
     row.rooms = [...new Set(rooms)].join(", ");
   });
+  // A resident/CRNA's room reflects where they are AFTER 5 PM (the 5/8 PM columns),
+  // not who was in the room before 5 PM (Current Staff).
   const findRoom = (name) => {
-    const m = data.main.find((mm) => cellNames(mm.staff).some((n) => nameMatch(n, name)) || cellNames(mm.fivepm).some((n) => nameMatch(n, name)));
+    const m = data.main.find((mm) => cellNames(mm.fivepm).some((n) => nameMatch(n, name)) || cellNames(mm.eightpm).some((n) => nameMatch(n, name)));
     return m ? m.room : "";
   };
   data.residents.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
-  data.crnas.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
+  data.crnas.forEach((row) => { if (row.name) { const r = findRoom(row.name); if (r) row.room = r; } });
+  // Drop auto-added R6 residents who are no longer assigned anywhere.
+  data.residents = data.residents.filter((row) => !(/^R6/i.test((row.role || "").trim()) && !(row.room || "").trim()));
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
-  syncStuckResidents();
   updateDinnerFlags();
   renderAll(); renderStats();
   toast("Rosters updated from room assignments.");
@@ -764,6 +785,10 @@ function showGate(onUnlock) {
 /* ------------------------------ Wire up -------------------------------- */
 function start() {
   loadAll();
+  // Team Lead isn't a staffing resident — keep it out of the panel.
+  const beforeTL = data.residents.length;
+  data.residents = data.residents.filter((r) => !/^TL$/i.test((r.role || "").trim()));
+  if (data.residents.length !== beforeTL) saveTable("residents");
   try { window.DIRECTORY = JSON.parse(localStorage.getItem("coverageBoard.directory.v1")) || null; } catch { window.DIRECTORY = null; }
   show8pm = localStorage.getItem("coverageBoard.show8pm.v1") === "1" || new Date().getHours() >= 19;
   renderAll();
@@ -777,6 +802,7 @@ function start() {
   bind("deleteEmpty", deleteEmptyRooms);
   bind("removeNonCall", removeNonCallAttendings);
   bind("transferLate", transferLateStaff);
+  bind("transferOnCall", transferOnCallStaff);
   bind("fill5pm", fill5pmFromOnCall);
   bind("updateRosters", updateRostersFromRooms);
   bind("copyAtt", copyAttendingAssignments);
