@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Editor / IDE
+.claude/
+.vscode/
+.idea/
+
+# Exports created while using the board
+coverage-board-*.csv
+coverage-board-*.json
+
+# Schedule PDFs — contain real staff names, never commit to a public repo
+*.pdf
