@@ -252,7 +252,14 @@
     data.main.forEach((r) => (prev[normRoom(r.room)] = r));
     data.main = parsed.rooms.map((pr) => {
       const old = prev[normRoom(pr.room)];
-      return blank(TABLES.main.columns, { room: pr.room, attending: pr.attending, staff: pr.staff, fivepm: old ? old.fivepm : "", dinner: old ? old.dinner : "" });
+      return blank(TABLES.main.columns, {
+        room: pr.room, attending: pr.attending, staff: pr.staff,
+        fivepm: old ? old.fivepm : "",
+        dinner: old ? old.dinner : "",
+        tag: old ? old.tag : "",
+        status: old ? old.status : "ongoing",
+        past8: old ? old.past8 : false,
+      });
     });
     saveTable("main");
     data.attendings = parsed.attendings.map((a) => blank(TABLES.attendings.columns, { role: a.role, name: a.name }));

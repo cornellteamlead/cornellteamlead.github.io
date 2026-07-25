@@ -46,7 +46,7 @@ const TABLES = {
       { type: "spacer",   label: "" },
     ],
     seed() {
-      return ROOMS_CANON.map((r) => blank(this.columns, { room: r }));
+      return ROOMS_CANON.map((r) => blank(this.columns, { room: r, status: "ongoing" }));
     },
   },
   attendings: {
@@ -138,6 +138,7 @@ function applyRemote(remote) {
     const ta = document.getElementById("notes");
     if (ta) ta.value = remote.notes;
   }
+  ensureRoomDefaults();
   localStorage.setItem(UPDATED_KEY, remote.savedAt || new Date().toISOString());
   renderAll();
   renderStats();
@@ -152,6 +153,13 @@ function touch() {
 }
 
 function loadAll() { TABLE_IDS.forEach(loadTable); }
+
+/* Rooms with no status yet default to green (case ongoing). */
+function ensureRoomDefaults() {
+  let changed = false;
+  data.main.forEach((r) => { if (r.status === undefined) { r.status = "ongoing"; changed = true; } });
+  if (changed) localStorage.setItem(TABLES.main.storageKey, JSON.stringify(data.main));
+}
 
 /* ------------------------------ Rendering ------------------------------ */
 function tableEl(id) { return document.querySelector(`table[data-table="${id}"]`); }
@@ -527,7 +535,7 @@ function insertRoomSorted(room) {
   const idx = canonIndex(room);
   let pos = data.main.findIndex((m) => canonIndex(m.room) > idx);
   if (pos === -1) pos = data.main.length;
-  data.main.splice(pos, 0, blank(TABLES.main.columns, { room }));
+  data.main.splice(pos, 0, blank(TABLES.main.columns, { room, status: "ongoing" }));
   saveTable("main");
   renderTable("main");
   renderStats();
@@ -819,9 +827,9 @@ function renderStats() {
     `<span class="stat-sub">${rooms.length ? escHtml(rooms.join(", ")) : "all filled"}</span></div></div>`;
 
   const past8 = data.main.filter((r) => r.past8).length;
-  // Among rooms in use (someone in attending or staff), which are missing a piece?
-  const needAtt = data.main.filter((r) => !(r.attending || "").trim() && (r.staff || "").trim()).map((r) => r.room);
-  const needStaff = data.main.filter((r) => !(r.staff || "").trim() && (r.attending || "").trim()).map((r) => r.room);
+  // Green (ongoing) rooms missing an attending / missing a 5 PM staff member.
+  const needAtt = data.main.filter((r) => r.status === "ongoing" && !(r.attending || "").trim()).map((r) => r.room);
+  const needStaff = data.main.filter((r) => r.status === "ongoing" && !(r.fivepm || "").trim()).map((r) => r.room);
 
   bar.innerHTML =
     tile("Rooms going", roomsGoing) +
@@ -921,6 +929,7 @@ function showGate(onUnlock) {
 /* ------------------------------ Wire up -------------------------------- */
 function start() {
   loadAll();
+  ensureRoomDefaults();
   // Team Lead isn't a staffing resident — keep it out of the panel.
   const beforeTL = data.residents.length;
   data.residents = data.residents.filter((r) => !/^TL$/i.test((r.role || "").trim()));
