@@ -256,6 +256,18 @@ function renderTable(id) {
         if (lbl) td.dataset.role = lbl;
       }
       if (id === "crnas" && c.key === "name" && row.stuck) td.dataset.role = "stuck";
+      // Reflect room state into the roster panels:
+      // - staff in a closing (yellow) room -> yellow highlight
+      // - a room's specialty color -> highlight its room number in the panels
+      if ((id === "residents" || id === "crnas") && c.key === "name" && row.room && roomInfo(row.room).status === "closing") {
+        td.classList.add("roster-closing");
+      }
+      if ((id === "residents" || id === "crnas") && c.key === "room" && val) {
+        const t = roomInfo(val).tag; if (t) td.classList.add("tag-" + t);
+      }
+      if (id === "attendings" && c.key === "rooms" && val) {
+        for (const rm of cellNames(val)) { const t = roomInfo(rm).tag; if (t) { td.classList.add("tag-" + t); break; } }
+      }
       tr.appendChild(td);
     });
     const act = document.createElement("td");
@@ -446,7 +458,7 @@ function setRoomMeta(idx, field, value) {
   if (!data.main[idx]) return;
   data.main[idx][field] = value;
   saveTable("main");
-  renderTable("main");
+  renderAll(); // rooms + rosters (status/tag highlights reflect into the panels)
   renderStats();
 }
 
@@ -544,6 +556,10 @@ function syncStuckStaff() { syncStuckResidents(); syncStuckCrnas(); }
 
 /* ---- Add a room via prompt, inserted in canonical order ---- */
 function normRoomKey(s) { return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function roomInfo(name) {
+  const r = data.main.find((m) => normRoomKey(m.room) === normRoomKey(name));
+  return r ? { tag: r.tag || "", status: r.status || "" } : { tag: "", status: "" };
+}
 function canonIndex(room) {
   const key = normRoomKey(room);
   const i = ROOMS_CANON.findIndex((c) => normRoomKey(c) === key);
@@ -682,7 +698,9 @@ function staffRoleLabel(name) {
   const res = data.residents.find((r) => r.name && nameMatch(r.name, name));
   if (res) return /^R6/i.test((res.role || "").trim()) ? "stuck" : (res.role || "");
   const crn = data.crnas.find((r) => r.name && nameMatch(r.name, name));
-  if (crn) return "CRNA";
+  if (crn) return crn.stuck ? "CRNA-stuck" : "CRNA - 8pm";
+  const dirC = (window.DIRECTORY && window.DIRECTORY.crnas) || [];
+  if (dirC.some((c) => nameMatch(c, name))) return "CRNA";
   return "";
 }
 function cellRoleLabel(key, cellValue) {

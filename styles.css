@@ -202,6 +202,9 @@ html, body {
 .tag-Thoracic  { background: #ffe1bf; }
 .tag-Cardiac   { background: #ffd4d4; }
 
+/* Staff whose room is closing (yellow dot) */
+.roster-closing { background: #ffe9a8; }
+
 /* Past 8 PM */
 .past8-badge { font-size: 0.8rem; }
 .past8-box { display: none; margin-left: auto; cursor: pointer; }
