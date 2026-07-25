@@ -255,6 +255,7 @@ function renderTable(id) {
         const lbl = cellRoleLabel(c.key, val);
         if (lbl) td.dataset.role = lbl;
       }
+      if (id === "crnas" && c.key === "name" && row.stuck) td.dataset.role = "stuck";
       tr.appendChild(td);
     });
     const act = document.createElement("td");
@@ -302,7 +303,7 @@ function onEdit(e) {
       if (lbl) td.dataset.role = lbl; else td.removeAttribute("data-role");
     }
     if (e.type === "blur" && table === "main" && key === "dinner") updateDinnerFlags();
-    if (e.type === "blur" && table === "main" && key === "fivepm") syncStuckResidents();
+    if (e.type === "blur" && table === "main" && key === "fivepm") syncStuckStaff();
   }
 }
 
@@ -524,6 +525,23 @@ function syncStuckResidents() {
   if (added) { saveTable("residents"); renderTable("residents"); renderStats(); }
 }
 
+/* ---- Add non-late CRNAs sitting in a 5 PM slot to the CRNA panel as "stuck" ---- */
+function syncStuckCrnas() {
+  const dirCrnas = (window.DIRECTORY && window.DIRECTORY.crnas) || [];
+  const inPanel = (name) => data.crnas.some((r) => r.name && nameMatch(r.name, name));
+  let added = false;
+  data.main.forEach((r) => {
+    cellNames(r.fivepm).forEach((name) => {
+      if (dirCrnas.some((d) => nameMatch(d, name)) && !inPanel(name)) {
+        data.crnas.push(blank(TABLES.crnas.columns, { name, room: r.room, stuck: true }));
+        added = true;
+      }
+    });
+  });
+  if (added) { saveTable("crnas"); renderTable("crnas"); renderStats(); }
+}
+function syncStuckStaff() { syncStuckResidents(); syncStuckCrnas(); }
+
 /* ---- Add a room via prompt, inserted in canonical order ---- */
 function normRoomKey(s) { return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
 function canonIndex(room) {
@@ -683,7 +701,7 @@ function copyStaffTo5pm(idx) {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckResidents();
+  syncStuckStaff();
 }
 
 /* ---- Auto-fill 5 PM from on-call residents/CRNAs already in the room ---- */
@@ -697,7 +715,7 @@ function fill5pmFromOnCall() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckResidents();
+  syncStuckStaff();
   toast(`Filled 5 PM for ${n} room${n === 1 ? "" : "s"} (on-call staff).`);
 }
 
@@ -721,7 +739,7 @@ function transferStuckResidents() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckResidents();
+  syncStuckStaff();
   toast(`Transferred stuck residents into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
@@ -738,7 +756,7 @@ function transferOnCallStaff() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckResidents();
+  syncStuckStaff();
   toast(`Transferred on-call staff into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
@@ -759,7 +777,7 @@ function removeNonCallAttendings() {
 
 /* ---- Autofill roster room columns from the Room Assignments ---- */
 function updateRostersFromRooms() {
-  syncStuckResidents(); // pull in any new non-call residents now sitting in a 5 PM slot
+  syncStuckStaff(); // pull in any new non-call residents now sitting in a 5 PM slot
   data.attendings.forEach((row) => {
     if (!row.name) return;
     const rooms = data.main.filter((m) => cellNames(m.attending).some((n) => nameMatch(n, row.name))).map((m) => m.room);
@@ -812,7 +830,9 @@ function renderStats() {
 
   const roomsGoing = data.main.filter((r) => (r.attending || "").trim() || (r.staff || "").trim()).length;
   const attOnCall = rosterNames("attendings").length;
-  const crnaOnCall = rosterNames("crnas").length;
+  const crnaRows = data.crnas.filter((r) => r.name);
+  const crnaStuck = crnaRows.filter((r) => r.stuck).length;
+  const crnaLate = crnaRows.length - crnaStuck;
 
   // Residents panel: R6 rows are the "stuck" (not-on-call) residents pulled in.
   const resRows = data.residents.filter((r) => r.name);
@@ -837,7 +857,7 @@ function renderStats() {
     tileList("Need staff", needStaff) +
     tile("Attendings on call", attOnCall) +
     tile("Residents", resTotal, `${resOnCall} on call · ${stuck} stuck`) +
-    tile("CRNAs on call", crnaOnCall) +
+    tile("CRNAs", crnaRows.length, `${crnaLate} late · ${crnaStuck} stuck`) +
     tile("Rooms past 8 PM", past8);
 }
 
