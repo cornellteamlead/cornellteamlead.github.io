@@ -115,6 +115,30 @@ function loadTable(id) {
 function saveTable(id) {
   localStorage.setItem(TABLES[id].storageKey, JSON.stringify(data[id]));
   touch();
+  if (window.CloudSync) window.CloudSync.save();
+}
+
+/* Apply a board pulled from the cloud into local state (no re-upload). */
+function applyRemote(remote) {
+  if (!remote) return;
+  TABLE_IDS.forEach((id) => {
+    if (Array.isArray(remote[id])) {
+      data[id] = remote[id].map((r) => blank(TABLES[id].columns, r));
+      localStorage.setItem(TABLES[id].storageKey, JSON.stringify(data[id]));
+    }
+  });
+  if (remote.directory) {
+    window.DIRECTORY = remote.directory;
+    localStorage.setItem("coverageBoard.directory.v1", JSON.stringify(remote.directory));
+  }
+  if (typeof remote.notes === "string") {
+    localStorage.setItem("coverageBoard.notes.v1", remote.notes);
+    const ta = document.getElementById("notes");
+    if (ta) ta.value = remote.notes;
+  }
+  localStorage.setItem(UPDATED_KEY, remote.savedAt || new Date().toISOString());
+  renderAll();
+  renderStats();
 }
 
 function touch() {
@@ -508,7 +532,10 @@ function initNotes() {
   const ta = document.getElementById("notes");
   if (!ta) return;
   ta.value = localStorage.getItem("coverageBoard.notes.v1") || "";
-  ta.addEventListener("input", () => localStorage.setItem("coverageBoard.notes.v1", ta.value));
+  ta.addEventListener("input", () => {
+    localStorage.setItem("coverageBoard.notes.v1", ta.value);
+    if (window.CloudSync) window.CloudSync.save();
+  });
 }
 
 /* ---- Lightweight popup menu ---- */
@@ -863,6 +890,9 @@ function start() {
 
   document.addEventListener("input", onEdit);
   document.addEventListener("blur", onEdit, true);
+
+  bind("syncNow", () => window.CloudSync && window.CloudSync.refresh());
+  if (window.CloudSync) window.CloudSync.init(applyRemote);
 }
 
 function init() {

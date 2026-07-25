@@ -54,6 +54,8 @@ html, body {
   font-size: 0.82rem;
   color: #b9d3ea;
 }
+.sync-status { font-size: 0.78rem; color: #9fe0b8; margin-left: 12px; white-space: nowrap; }
+.sync-status.err { color: #ffc4c4; }
 
 /* ---------- Toolbar ---------- */
 .toolbar {

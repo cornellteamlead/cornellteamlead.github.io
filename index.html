@@ -16,6 +16,7 @@
     </div>
     <div class="header-right">
       <span class="updated">Last edited: <span id="lastUpdated">—</span></span>
+      <span id="syncStatus" class="sync-status" hidden></span>
     </div>
   </header>
 
@@ -29,6 +30,7 @@
       <button id="exportCsv" class="btn" type="button">Export CSV</button>
       <button id="exportJson" class="btn" type="button">Save (JSON)</button>
       <button id="importJson" class="btn" type="button">Load (JSON)</button>
+      <button id="syncNow" class="btn" type="button">↻ Sync</button>
       <button id="printBtn" class="btn" type="button">Print</button>
       <button id="resetBtn" class="btn btn-danger" type="button">Reset</button>
     </div>
@@ -114,5 +116,6 @@
 
   <script src="app.js"></script>
   <script src="pdf-import.js"></script>
+  <script src="sync.js"></script>
 </body>
 </html>
