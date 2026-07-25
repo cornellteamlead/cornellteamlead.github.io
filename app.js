@@ -69,7 +69,7 @@ const TABLES = {
       { key: "role", label: "Role" },
       { key: "name", label: "Residents" },
       { key: "room", label: "Room" },
-      { type: "dinner", label: "Dinner" },
+      { type: "dinner", label: "Dinner", cond: "dinner" },
     ],
     seed() {
       const roles = ["S1", "S2", "S4", "S5", "R1", "R2", "R3", "R4", "R5", "R6/ML"];
@@ -82,7 +82,7 @@ const TABLES = {
     columns: [
       { key: "name", label: "CRNAs" },
       { key: "room", label: "Room" },
-      { type: "dinner", label: "Dinner" },
+      { type: "dinner", label: "Dinner", cond: "dinner" },
     ],
     seed() {
       return Array.from({ length: 6 }, () => blank(this.columns));
@@ -453,7 +453,15 @@ let show8pm = false;
 function colVisible(c) {
   if (c.cond === "past8") return document.body.classList.contains("past8-mode");
   if (c.cond === "show8pm") return show8pm;
+  if (c.cond === "dinner") return document.body.classList.contains("dinner-mode");
   return true;
+}
+function toggleDinnerMode() {
+  document.body.classList.toggle("dinner-mode");
+  const b = document.getElementById("dinnerBtn");
+  if (b) b.classList.toggle("active", document.body.classList.contains("dinner-mode"));
+  renderTable("residents");
+  renderTable("crnas");
 }
 function set8pm(v) {
   show8pm = v;
@@ -806,11 +814,19 @@ function renderStats() {
 
   const tile = (label, value, sub) =>
     `<div class="stat"><div class="stat-val">${value}</div><div class="stat-label">${label}${sub ? ` <span class="stat-sub">${sub}</span>` : ""}</div></div>`;
+  const tileList = (label, rooms) =>
+    `<div class="stat stat-wide"><div class="stat-val">${rooms.length}</div><div class="stat-label">${label} ` +
+    `<span class="stat-sub">${rooms.length ? escHtml(rooms.join(", ")) : "all filled"}</span></div></div>`;
 
   const past8 = data.main.filter((r) => r.past8).length;
+  // Among rooms in use (someone in attending or staff), which are missing a piece?
+  const needAtt = data.main.filter((r) => !(r.attending || "").trim() && (r.staff || "").trim()).map((r) => r.room);
+  const needStaff = data.main.filter((r) => !(r.staff || "").trim() && (r.attending || "").trim()).map((r) => r.room);
 
   bar.innerHTML =
     tile("Rooms going", roomsGoing) +
+    tileList("Need attending", needAtt) +
+    tileList("Need staff", needStaff) +
     tile("Attendings on call", attOnCall) +
     tile("Residents", resTotal, `${resOnCall} on call · ${stuck} stuck`) +
     tile("CRNAs on call", crnaOnCall) +
@@ -918,6 +934,7 @@ function start() {
   // Workflow action buttons
   const bind = (id, fn) => { const el = document.getElementById(id); if (el) el.addEventListener("click", fn); };
   bind("past8Btn", togglePast8Mode);
+  bind("dinnerBtn", toggleDinnerMode);
   bind("start8pmBtn", toggle8pm);
   bind("deleteEmpty", deleteEmptyRooms);
   bind("removeNonCall", removeNonCallAttendings);
