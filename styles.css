@@ -132,6 +132,7 @@ html, body {
 }
 .btn:hover { background: #f1f5f9; }
 .btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.45; cursor: default; pointer-events: none; }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);

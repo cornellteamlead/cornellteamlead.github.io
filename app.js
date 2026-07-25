@@ -116,11 +116,13 @@ function saveTable(id) {
   localStorage.setItem(TABLES[id].storageKey, JSON.stringify(data[id]));
   touch();
   if (window.CloudSync) window.CloudSync.save();
+  recordHistory();
 }
 
 /* Apply a board pulled from the cloud into local state (no re-upload). */
 function applyRemote(remote) {
   if (!remote) return;
+  suppressHistory = true;
   TABLE_IDS.forEach((id) => {
     if (Array.isArray(remote[id])) {
       data[id] = remote[id].map((r) => blank(TABLES[id].columns, r));
@@ -139,6 +141,8 @@ function applyRemote(remote) {
   localStorage.setItem(UPDATED_KEY, remote.savedAt || new Date().toISOString());
   renderAll();
   renderStats();
+  suppressHistory = false;
+  initHistory(); // undo baseline = the board we just loaded
 }
 
 function touch() {
@@ -535,6 +539,7 @@ function initNotes() {
   ta.addEventListener("input", () => {
     localStorage.setItem("coverageBoard.notes.v1", ta.value);
     if (window.CloudSync) window.CloudSync.save();
+    recordHistory();
   });
 }
 
@@ -558,6 +563,63 @@ function openMenu(anchor, items) {
   m.style.left = Math.min(r.left, window.innerWidth - 170) + "px";
   m.style.top = (r.bottom + 4) + "px";
   setTimeout(() => document.addEventListener("click", closeMenu, { once: true }), 0);
+}
+
+/* ============================ Undo history ============================ */
+const MAX_HISTORY = 11; // current state + up to 10 undos
+let history = [];
+let historyTimer = null;
+let suppressHistory = false;
+
+function serializeState() {
+  return JSON.stringify({
+    main: data.main, attendings: data.attendings, residents: data.residents, crnas: data.crnas,
+    notes: localStorage.getItem("coverageBoard.notes.v1") || "",
+  });
+}
+function initHistory() {
+  clearTimeout(historyTimer);
+  history = [serializeState()];
+  updateUndoButton();
+}
+function recordHistory() {
+  if (suppressHistory) return;
+  clearTimeout(historyTimer);
+  historyTimer = setTimeout(() => {
+    const s = serializeState();
+    if (history.length && history[history.length - 1] === s) return;
+    history.push(s);
+    if (history.length > MAX_HISTORY) history.shift();
+    updateUndoButton();
+  }, 500);
+}
+function applyState(s) {
+  suppressHistory = true;
+  TABLE_IDS.forEach((id) => {
+    if (Array.isArray(s[id])) { data[id] = s[id].map((r) => blank(TABLES[id].columns, r)); saveTable(id); }
+  });
+  if (typeof s.notes === "string") {
+    localStorage.setItem("coverageBoard.notes.v1", s.notes);
+    const ta = document.getElementById("notes"); if (ta) ta.value = s.notes;
+  }
+  renderAll(); renderStats();
+  suppressHistory = false;
+}
+function undo() {
+  clearTimeout(historyTimer);
+  const cur = serializeState();
+  if (!history.length || history[history.length - 1] !== cur) {
+    history.push(cur); if (history.length > MAX_HISTORY) history.shift(); // commit uncommitted edits first
+  }
+  if (history.length < 2) { toast("Nothing to undo."); return; }
+  history.pop();
+  applyState(JSON.parse(history[history.length - 1]));
+  updateUndoButton();
+  toast("Undid last change.");
+}
+function updateUndoButton() {
+  const b = document.getElementById("undoBtn");
+  if (b) b.disabled = history.length < 2;
 }
 
 /* ============================ Workflow tools =========================== */
@@ -892,6 +954,17 @@ function start() {
   document.addEventListener("blur", onEdit, true);
 
   bind("syncNow", () => window.CloudSync && window.CloudSync.refresh());
+  bind("undoBtn", undo);
+  document.addEventListener("keydown", (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+      const t = e.target;
+      if (t && (t.isContentEditable || t.tagName === "TEXTAREA" || t.tagName === "INPUT")) return; // let the field handle its own undo
+      e.preventDefault();
+      undo();
+    }
+  });
+
+  initHistory();
   if (window.CloudSync) window.CloudSync.init(applyRemote);
 }
 
