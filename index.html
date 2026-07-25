@@ -40,8 +40,8 @@
 
   <div class="actions-bar">
     <button id="removeNonCall" class="btn" type="button">Remove non-call attendings</button>
-    <button id="transferLate" class="btn btn-primary" type="button">Transfer late staff</button>
     <button id="transferOnCall" class="btn btn-primary" type="button">Transfer on-call staff</button>
+    <button id="transferStuck" class="btn btn-primary" type="button">Transfer stuck residents</button>
     <button id="fill5pm" class="btn" type="button">Fill 5 PM from on-call</button>
     <button id="updateRosters" class="btn" type="button">Update rosters ⟵ rooms</button>
     <button id="deleteEmpty" class="btn" type="button">Delete empty rooms</button>
@@ -96,12 +96,13 @@
             <table class="roster-table" data-table="crnas"><thead></thead><tbody></tbody></table>
           </div>
         </section>
+
+        <section class="notes-section">
+          <h2>Notes</h2>
+          <textarea id="notes" placeholder="Notes about specific rooms — e.g. 'G7 add-on peds coming', 'IR CT2 done ~9pm'…"></textarea>
+        </section>
       </aside>
     </div>
-    <section class="notes-section">
-      <h2>Notes</h2>
-      <textarea id="notes" placeholder="Notes about specific rooms — e.g. 'G7 add-on peds coming', 'IR CT2 done ~9pm'…"></textarea>
-    </section>
   </main>
 
   <footer class="app-footer">

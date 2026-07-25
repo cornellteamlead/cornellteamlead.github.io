@@ -430,6 +430,7 @@ function colVisible(c) {
 function set8pm(v) {
   show8pm = v;
   localStorage.setItem("coverageBoard.show8pm.v1", v ? "1" : "0");
+  document.body.classList.toggle("show8pm-on", v);
   const b = document.getElementById("start8pmBtn");
   if (b) { b.textContent = v ? "Hide 8 PM column" : "Start 8 PM column"; b.classList.toggle("active", v); }
   renderTable("main");
@@ -595,23 +596,28 @@ function fill5pmFromOnCall() {
   toast(`Filled 5 PM for ${n} room${n === 1 ? "" : "s"} (on-call staff).`);
 }
 
-/* ---- Transfer late staff into 5 PM: every resident (on-call or not) and
-   every late CRNA who is currently in a room continues in that room at 5 PM. */
-function transferLateStaff() {
+/* ---- Transfer stuck residents into 5 PM: residents who are NOT on call but
+   are currently in a room. Merged into the 5 PM cell and pulled into the
+   Residents panel as R6 (never overwrites who's already in 5 PM). */
+function transferStuckResidents() {
   const dirRes = (window.DIRECTORY && window.DIRECTORY.residents) || [];
-  const lateCrnas = rosterNames("crnas");
+  const onCall = data.residents.filter((r) => r.name && !/^R6/i.test((r.role || "").trim())).map((r) => r.name);
   let n = 0;
   data.main.forEach((r) => {
-    const keep = cellNames(r.staff).filter((name) =>
-      dirRes.some((d) => nameMatch(d, name)) || lateCrnas.some((c) => nameMatch(c, name))
+    const stuck = cellNames(r.staff).filter((name) =>
+      dirRes.some((d) => nameMatch(d, name)) && !onCall.some((c) => nameMatch(c, name))
     );
-    if (keep.length) { r.fivepm = keep.join(", "); n++; }
+    if (!stuck.length) return;
+    const merged = cellNames(r.fivepm);
+    let added = false;
+    stuck.forEach((name) => { if (!merged.some((m) => nameMatch(m, name))) { merged.push(name); added = true; } });
+    if (added) { r.fivepm = merged.join(", "); n++; }
   });
   saveTable("main");
   renderTable("main");
   renderStats();
   syncStuckResidents();
-  toast(`Transferred late staff into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
+  toast(`Transferred stuck residents into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
 /* ---- Transfer on-call staff into 5 PM: on-call residents (S1/S2/S4/S5/R1-R5,
@@ -662,8 +668,6 @@ function updateRostersFromRooms() {
   };
   data.residents.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
   data.crnas.forEach((row) => { if (row.name) { const r = findRoom(row.name); if (r) row.room = r; } });
-  // Drop auto-added R6 residents who are no longer assigned anywhere.
-  data.residents = data.residents.filter((row) => !(/^R6/i.test((row.role || "").trim()) && !(row.room || "").trim()));
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
   updateDinnerFlags();
   renderAll(); renderStats();
@@ -828,8 +832,8 @@ function start() {
   bind("start8pmBtn", toggle8pm);
   bind("deleteEmpty", deleteEmptyRooms);
   bind("removeNonCall", removeNonCallAttendings);
-  bind("transferLate", transferLateStaff);
   bind("transferOnCall", transferOnCallStaff);
+  bind("transferStuck", transferStuckResidents);
   bind("fill5pm", fill5pmFromOnCall);
   bind("updateRosters", updateRostersFromRooms);
   bind("copyAtt", copyAttendingAssignments);

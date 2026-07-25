@@ -230,16 +230,17 @@ body.past8-mode .past8-box input { width: 15px; height: 15px; cursor: pointer; }
 .popitem .sw[data-clear] { background: repeating-linear-gradient(45deg, #fff, #fff 3px, #e2e8f0 3px, #e2e8f0 6px); }
 
 /* ---------- Checkbox cells ---------- */
-.check-cell { text-align: center; width: 84px; }
-.check-cell input { width: 16px; height: 16px; cursor: pointer; }
-th.check-head { text-align: center; white-space: normal; }
+.check-cell { text-align: center; width: 40px; padding: 2px 3px; }
+.check-cell input { width: 15px; height: 15px; cursor: pointer; }
+th.check-head { text-align: center; white-space: normal; font-size: 0.64rem; padding: 4px 3px; }
 
 /* ---------- Notes area ---------- */
-.notes-section { margin-top: 22px; }
-.notes-section h2 { font-size: 1rem; color: var(--header-bg); margin: 0 0 8px; }
+.notes-section { margin-top: 0; }
+.rosters > .notes-section { grid-column: 1 / -1; }
+.notes-section h2 { font-size: 0.9rem; color: var(--header-bg); margin: 0 0 6px; }
 #notes {
   width: 100%;
-  min-height: 120px;
+  min-height: 90px;
   padding: 12px 14px;
   border: 1px solid var(--border-strong);
   border-radius: 12px;
@@ -253,7 +254,7 @@ th.check-head { text-align: center; white-space: normal; }
 #notes:focus { border-color: var(--focus); box-shadow: 0 0 0 3px var(--accent-soft); }
 
 /* ---------- Arrow cell ---------- */
-.arrow-cell { width: 34px; text-align: center; padding: 0 !important; }
+.arrow-cell { width: 26px; text-align: center; padding: 0 !important; }
 .arrow-btn {
   border: none;
   background: transparent;
@@ -289,10 +290,12 @@ th.check-head { text-align: center; white-space: normal; }
 main { padding: 12px 16px 24px; }
 .board-layout {
   display: grid;
-  grid-template-columns: minmax(0, 640px) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
+/* Give the room panel more room only when the 8 PM column is showing */
+body.show8pm-on .board-layout { grid-template-columns: minmax(0, 720px) minmax(0, 1fr); }
 /* Attendings, Residents, CRNAs all on the same level */
 .rosters {
   display: grid;
@@ -347,10 +350,10 @@ thead th {
   white-space: nowrap;
 }
 tbody td {
-  padding: 3px 7px;
+  padding: 2px 6px;
   border-bottom: 1px solid var(--border);
   vertical-align: top;
-  min-width: 60px;
+  min-width: 52px;
 }
 /* Room column: shrink to its content instead of stretching */
 .main-panel .room-cell,
