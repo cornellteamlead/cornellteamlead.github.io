@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="After-hours (after 5pm) hospital OR coverage board for attendings, residents, and CRNAs." />
+  <title>After-Hours Coverage Board</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-left">
+      <h1>🏥 After-Hours Coverage Board</h1>
+      <p class="subtitle">OR coverage after 5:00 PM — attendings, residents &amp; CRNAs</p>
+    </div>
+    <div class="header-right">
+      <span class="updated">Last edited: <span id="lastUpdated">—</span></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="toolbar-group search-wrap">
+      <input id="search" type="search" placeholder="Search name, room, role…" aria-label="Search the board" autocomplete="off" />
+      <div id="searchResults" class="search-results" hidden></div>
+    </div>
+    <div class="toolbar-group">
+      <button id="importPdf" class="btn btn-primary" type="button">⬆ Upload schedule PDF</button>
+      <button id="exportCsv" class="btn" type="button">Export CSV</button>
+      <button id="exportJson" class="btn" type="button">Save (JSON)</button>
+      <button id="importJson" class="btn" type="button">Load (JSON)</button>
+      <button id="printBtn" class="btn" type="button">Print</button>
+      <button id="resetBtn" class="btn btn-danger" type="button">Reset</button>
+    </div>
+    <input id="fileInput" type="file" accept="application/json,.json" hidden />
+    <input id="pdfInput" type="file" accept="application/pdf,.pdf" hidden />
+  </div>
+
+  <div id="statsBar" class="stats-bar"><!-- built by app.js --></div>
+
+  <div class="actions-bar">
+    <button id="removeNonCall" class="btn" type="button">Remove non-call attendings</button>
+    <button id="transferLate" class="btn btn-primary" type="button">Transfer late staff</button>
+    <button id="fill5pm" class="btn" type="button">Fill 5 PM from on-call</button>
+    <button id="updateRosters" class="btn" type="button">Update rosters ⟵ rooms</button>
+    <button id="deleteEmpty" class="btn" type="button">Delete empty rooms</button>
+    <button id="start8pmBtn" class="btn" type="button">Start 8 PM column</button>
+    <button id="past8Btn" class="btn" type="button">⏰ Check past 8 PM</button>
+    <span class="actions-spacer"></span>
+    <button id="copyAtt" class="btn" type="button">Copy attending assignments</button>
+    <button id="copyStaff" class="btn" type="button">Copy staff assignments</button>
+  </div>
+
+  <main>
+    <div class="board-layout">
+      <!-- Left: main room-assignment board -->
+      <section class="panel main-panel">
+        <div class="panel-head">
+          <h2>Room Assignments</h2>
+          <button class="btn btn-primary add-btn" type="button" data-table="main">+ Add room</button>
+        </div>
+        <div class="table-wrap">
+          <table class="board-table" data-table="main"><thead></thead><tbody></tbody></table>
+        </div>
+      </section>
+
+      <!-- Right: rosters -->
+      <aside class="rosters">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Attendings</h2>
+            <button class="btn add-btn" type="button" data-table="attendings">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table class="roster-table" data-table="attendings"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>Residents</h2>
+            <button class="btn add-btn" type="button" data-table="residents">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table class="roster-table" data-table="residents"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>CRNAs</h2>
+            <button class="btn add-btn" type="button" data-table="crnas">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table class="roster-table" data-table="crnas"><thead></thead><tbody></tbody></table>
+          </div>
+        </section>
+      </aside>
+    </div>
+    <section class="notes-section">
+      <h2>Notes</h2>
+      <textarea id="notes" placeholder="Notes about specific rooms — e.g. 'G7 add-on peds coming', 'IR CT2 done ~9pm'…"></textarea>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>
+      Data is saved in <strong>this browser only</strong>. Use <em>Save (JSON)</em> to keep a master copy
+      and <em>Load (JSON)</em> to share it. &nbsp;•&nbsp; Click any cell to edit.
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="pdf-import.js"></script>
+</body>
+</html>
