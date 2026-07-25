@@ -215,6 +215,10 @@ function renderTable(id) {
       const val = row[c.key] || "";
       td.textContent = val;
       if (!val) td.classList.add("empty");
+      if (id === "main" && (c.key === "attending" || c.key === "fivepm")) {
+        const lbl = cellRoleLabel(c.key, val);
+        if (lbl) td.dataset.role = lbl;
+      }
       tr.appendChild(td);
     });
     const act = document.createElement("td");
@@ -257,6 +261,10 @@ function onEdit(e) {
     arr[idx][key] = value;
     td.classList.toggle("empty", value === "");
     saveTable(table);
+    if (table === "main" && (key === "attending" || key === "fivepm")) {
+      const lbl = cellRoleLabel(key, value);
+      if (lbl) td.dataset.role = lbl; else td.removeAttribute("data-role");
+    }
     if (e.type === "blur" && table === "main" && key === "dinner") updateDinnerFlags();
     if (e.type === "blur" && table === "main" && key === "fivepm") syncStuckResidents();
   }
@@ -540,6 +548,25 @@ function cellNames(cell) {
   return String(cell || "").split(",").map((s) => s.replace(/\([^)]*\)/g, "").trim()).filter(Boolean);
 }
 function rosterNames(id) { return data[id].map((r) => r.name).filter(Boolean); }
+
+/* ---- Role sub-labels shown in italics under a name ---- */
+function lookupRole(tableId, name) {
+  const row = data[tableId].find((r) => r.name && nameMatch(r.name, name));
+  return row ? (row.role || "") : "";
+}
+function staffRoleLabel(name) {
+  const res = data.residents.find((r) => r.name && nameMatch(r.name, name));
+  if (res) return /^R6/i.test((res.role || "").trim()) ? "stuck" : (res.role || "");
+  const crn = data.crnas.find((r) => r.name && nameMatch(r.name, name));
+  if (crn) return "CRNA";
+  return "";
+}
+function cellRoleLabel(key, cellValue) {
+  const names = cellNames(cellValue);
+  if (!names.length) return "";
+  const labels = names.map((n) => (key === "attending" ? lookupRole("attendings", n) : staffRoleLabel(n)));
+  return [...new Set(labels.filter(Boolean))].join(", ");
+}
 function uniqNames(list) { const out = []; list.forEach((n) => { if (!out.some((o) => nameMatch(o, n))) out.push(n); }); return out; }
 
 /* ---- Per-row arrow: copy Current Staff -> 5:00 PM ---- */

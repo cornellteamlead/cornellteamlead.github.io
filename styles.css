@@ -362,6 +362,16 @@ tbody td {
 tbody tr:nth-child(even) { background: var(--zebra); }
 tbody tr:hover { background: var(--accent-soft); }
 td[contenteditable] { outline: none; cursor: text; }
+/* Italic role sub-label under a name (attending / 5 PM cells) */
+td[data-role]::after {
+  content: attr(data-role);
+  display: block;
+  font-style: italic;
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--muted);
+  margin-top: 1px;
+}
 td[contenteditable]:focus {
   background: #fffbe6;
   box-shadow: inset 0 0 0 2px var(--accent);
