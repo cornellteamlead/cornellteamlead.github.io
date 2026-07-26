@@ -276,6 +276,8 @@
     }
     renderAll();
     if (typeof renderStats === "function") renderStats();
+    // Auto-fill the roster room columns (attendings' rooms, residents/CRNAs' rooms) from the board.
+    if (typeof updateRostersFromRooms === "function") updateRostersFromRooms();
   }
 
   /* ================= Preview modal ================= */
