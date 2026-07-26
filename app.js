@@ -258,6 +258,10 @@ function renderTable(id) {
       if (id === "main" && c.key === "attending" && row.origAttending) {
         td.title = "Originally: " + row.origAttending;
       }
+      // Ongoing room with no one assigned at 5 PM -> red
+      if (id === "main" && c.key === "fivepm" && !val && row.status === "ongoing") {
+        td.classList.add("needs-5pm");
+      }
       if (id === "crnas" && c.key === "name" && row.stuck) td.dataset.role = "stuck";
       // Reflect room state into the roster panels:
       // - staff in a closing (yellow) room -> yellow highlight
@@ -925,11 +929,15 @@ function renderStats() {
   // Green (ongoing) rooms missing an attending / missing a 5 PM staff member.
   const needAtt = data.main.filter((r) => r.status === "ongoing" && !(r.attending || "").trim()).map((r) => r.room);
   const needStaff = data.main.filter((r) => r.status === "ongoing" && !(r.fivepm || "").trim()).map((r) => r.room);
+  // Staff (residents + CRNAs) with no room assignment
+  const availStaff = data.residents.filter((r) => r.name && !(r.room || "").trim()).length +
+    data.crnas.filter((r) => r.name && !(r.room || "").trim()).length;
 
   bar.innerHTML =
     tile("Rooms going", roomsGoing) +
     tileList("Need attending", needAtt) +
     tileList("Need staff", needStaff) +
+    tile("Available staff", availStaff) +
     tile("Attendings on call", attOnCall) +
     tile("Residents", resTotal, `${resOnCall} on call · ${stuck} stuck`) +
     tile("CRNAs", crnaRows.length, `${crnaLate} late · ${crnaStuck} stuck`) +

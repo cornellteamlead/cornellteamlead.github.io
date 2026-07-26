@@ -204,6 +204,8 @@ html, body {
 
 /* Staff whose room is closing (yellow dot) */
 .roster-closing { background: #ffe9a8; }
+/* Ongoing room with nobody assigned at 5 PM */
+.needs-5pm { background: #ffcccc; }
 /* Free / available highlights */
 .roster-light-green { background: #d9f7de; }  /* attending with one room; free & on-call */
 .roster-green       { background: #8fdd97; }  /* free & not on call */
