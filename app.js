@@ -255,6 +255,9 @@ function renderTable(id) {
         const lbl = cellRoleLabel(c.key, val);
         if (lbl) td.dataset.role = lbl;
       }
+      if (id === "main" && c.key === "attending" && row.origAttending) {
+        td.title = "Originally: " + row.origAttending;
+      }
       if (id === "crnas" && c.key === "name" && row.stuck) td.dataset.role = "stuck";
       // Reflect room state into the roster panels:
       // - staff in a closing (yellow) room -> yellow highlight

@@ -256,6 +256,7 @@
       const old = prev[normRoom(pr.room)];
       return blank(TABLES.main.columns, {
         room: pr.room, attending: pr.attending, staff: pr.staff,
+        origAttending: pr.attending, // the attending originally in this room per the PDF
         fivepm: old ? old.fivepm : "",
         dinner: old ? old.dinner : "",
         tag: old ? old.tag : "",
