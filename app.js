@@ -327,7 +327,7 @@ function onEdit(e) {
       if (lbl) td.dataset.role = lbl; else td.removeAttribute("data-role");
     }
     if (e.type === "blur" && table === "main" && key === "dinner") updateDinnerFlags();
-    if (e.type === "blur" && table === "main" && key === "fivepm") syncStuckStaff();
+    if (e.type === "blur" && table === "main" && (key === "attending" || key === "fivepm")) autoSync5pm();
   }
 }
 
@@ -502,9 +502,28 @@ function set8pm(v) {
   document.body.classList.toggle("show8pm-on", v);
   const b = document.getElementById("start8pmBtn");
   if (b) { b.textContent = v ? "Hide 8 PM column" : "Start 8 PM column"; b.classList.toggle("active", v); }
+  const u8 = document.getElementById("updateFrom8pm");
+  if (u8) u8.hidden = !v; // only relevant once the 8 PM column exists
   renderTable("main");
 }
-function toggle8pm() { set8pm(!show8pm); }
+function toggle8pm() {
+  const turningOn = !show8pm;
+  set8pm(!show8pm);
+  if (turningOn) fill8pmFromOnCall();
+}
+/* When the 8 PM column is created, move on-call residents from 5 PM into 8 PM. */
+function fill8pmFromOnCall() {
+  const onCallRes = data.residents.filter((r) => r.name && !/^R6/i.test((r.role || "").trim())).map((r) => r.name);
+  let n = 0;
+  data.main.forEach((r) => {
+    const keep = cellNames(r.fivepm).filter((name) => onCallRes.some((c) => nameMatch(c, name)));
+    if (keep.length) { r.eightpm = keep.join(", "); n++; }
+  });
+  saveTable("main");
+  renderTable("main");
+  renderStats();
+  toast(`Moved on-call residents into 8 PM for ${n} room${n === 1 ? "" : "s"}.`);
+}
 
 /* ---- Dinner: auto-check staff whose room has a dinner giver ---- */
 function updateDinnerFlags() {
@@ -731,7 +750,7 @@ function copyStaffTo5pm(idx) {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckStaff();
+  autoSync5pm();
 }
 
 /* ---- Auto-fill 5 PM from on-call residents/CRNAs already in the room ---- */
@@ -745,7 +764,7 @@ function fill5pmFromOnCall() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckStaff();
+  autoSync5pm();
   toast(`Filled 5 PM for ${n} room${n === 1 ? "" : "s"} (on-call staff).`);
 }
 
@@ -769,7 +788,7 @@ function transferStuckResidents() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckStaff();
+  autoSync5pm();
   toast(`Transferred stuck residents into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
@@ -786,7 +805,7 @@ function transferOnCallStaff() {
   saveTable("main");
   renderTable("main");
   renderStats();
-  syncStuckStaff();
+  autoSync5pm();
   toast(`Transferred on-call staff into 5 PM for ${n} room${n === 1 ? "" : "s"}.`);
 }
 
@@ -806,17 +825,17 @@ function removeNonCallAttendings() {
 }
 
 /* ---- Autofill roster room columns from the Room Assignments ---- */
-function updateRostersFromRooms() {
-  syncStuckStaff(); // pull in any new non-call residents now sitting in a 5 PM slot
+function updateRostersFromRooms(source, silent) {
+  source = source === "eightpm" ? "eightpm" : "fivepm";
+  syncStuckStaff(); // pull in any non-call residents/CRNAs sitting in a 5 PM slot
   data.attendings.forEach((row) => {
     if (!row.name) return;
     const rooms = data.main.filter((m) => cellNames(m.attending).some((n) => nameMatch(n, row.name))).map((m) => m.room);
     row.rooms = [...new Set(rooms)].join(", ");
   });
-  // A resident/CRNA's room reflects where they are AFTER 5 PM (the 5/8 PM columns),
-  // not who was in the room before 5 PM (Current Staff).
+  // A resident/CRNA's room = where they are in the chosen column (5 PM or 8 PM).
   const findRoom = (name) => {
-    const m = data.main.find((mm) => cellNames(mm.fivepm).some((n) => nameMatch(n, name)) || cellNames(mm.eightpm).some((n) => nameMatch(n, name)));
+    const m = data.main.find((mm) => cellNames(mm[source]).some((n) => nameMatch(n, name)));
     return m ? m.room : "";
   };
   data.residents.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
@@ -824,8 +843,9 @@ function updateRostersFromRooms() {
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
   updateDinnerFlags();
   renderAll(); renderStats();
-  toast("Rosters updated from room assignments.");
+  if (!silent) toast(source === "eightpm" ? "Rosters updated from 8 PM." : "Rosters updated from 5 PM.");
 }
+function autoSync5pm() { updateRostersFromRooms("fivepm", true); }
 
 /* ---- Copy assignments to clipboard ---- */
 function copyText(text, label) {
@@ -1000,7 +1020,8 @@ function start() {
   bind("transferOnCall", transferOnCallStaff);
   bind("transferStuck", transferStuckResidents);
   bind("fill5pm", fill5pmFromOnCall);
-  bind("updateRosters", updateRostersFromRooms);
+  bind("updateRosters", () => updateRostersFromRooms("fivepm"));
+  bind("updateFrom8pm", () => updateRostersFromRooms("eightpm"));
   bind("copyAtt", copyAttendingAssignments);
   bind("copyStaff", copyStaffAssignments);
   set8pm(show8pm); // sync button label / column

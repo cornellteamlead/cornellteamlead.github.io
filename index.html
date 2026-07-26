@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="After-hours (after 5pm) hospital OR coverage board for attendings, residents, and CRNAs." />
   <title>After-Hours Coverage Board</title>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏥</text></svg>" />
 </head>
 <body>
@@ -46,7 +46,8 @@
     <button id="transferOnCall" class="btn btn-primary" type="button">Transfer on-call staff</button>
     <button id="transferStuck" class="btn btn-primary" type="button">Transfer stuck residents</button>
     <button id="fill5pm" class="btn" type="button">Fill 5 PM from on-call</button>
-    <button id="updateRosters" class="btn" type="button">Update rosters ⟵ rooms</button>
+    <button id="updateRosters" class="btn" type="button">Update from 5 PM</button>
+    <button id="updateFrom8pm" class="btn" type="button" hidden>Update from 8 PM</button>
     <button id="deleteEmpty" class="btn" type="button">Delete empty rooms</button>
     <button id="start8pmBtn" class="btn" type="button">Start 8 PM column</button>
     <button id="dinnerBtn" class="btn" type="button">🍽 Dinner time</button>
@@ -116,8 +117,8 @@
     </p>
   </footer>
 
-  <script src="app.js?v=3"></script>
-  <script src="pdf-import.js?v=3"></script>
-  <script src="sync.js?v=3"></script>
+  <script src="app.js?v=4"></script>
+  <script src="pdf-import.js?v=4"></script>
+  <script src="sync.js?v=4"></script>
 </body>
 </html>
