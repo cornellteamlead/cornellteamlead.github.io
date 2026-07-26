@@ -230,12 +230,14 @@
       people: dir.filter((p) => p.name.includes(",")).map((p) => ({ name: p.name, disp: disp(p), kind: p.kind })),
     };
 
-    // CRNAs staying late (12.5), excluding the DHK campus
-    const crnas = dir.filter((p) => p.kind === "crna" && p.late).map((p) => {
+    // CRNAs staying late (12.5), excluding the DHK campus. "Breaks" is the break
+    // rotation, not a room, so leave that room blank.
+    const crnas = dir.filter((p) => p.kind === "crna" && p.late && !/DHK/i.test(p.rooms)).map((p) => {
       const tokens = p.rooms.split(",").map((s) => s.trim());
-      const room = canonRoom(tokens.find((t) => !/^L-?5-?IR$/i.test(t)) || "");
+      let room = canonRoom(tokens.find((t) => !/^L-?5-?IR$/i.test(t)) || "");
+      if (/^breaks$/i.test(room)) room = "";
       return { name: disp(p), room };
-    }).filter((c) => c.room && !/^DHK/i.test(c.room));
+    });
 
     return { date, rooms, attendings, residents, crnas, directory };
   }
