@@ -341,11 +341,33 @@ function addRow(id) {
 }
 
 function deleteRow(id, idx) {
-  const label = data[id][idx] && (data[id][idx].room || data[id][idx].name) ? ` "${data[id][idx].room || data[id][idx].name}"` : "";
+  const row = data[id][idx];
+  const label = row && (row.room || row.name) ? ` "${row.room || row.name}"` : "";
   if (!confirm(`Delete this row${label}?`)) return;
+  const deletedRoom = id === "main" ? row.room : null;
   data[id].splice(idx, 1);
   saveTable(id);
   renderTable(id);
+  if (deletedRoom) removeRoomFromRosters(deletedRoom);
+}
+
+/* When a room is deleted, drop it from the attendings' rooms and clear it from
+   any resident/CRNA who was assigned there. */
+function removeRoomFromRosters(room) {
+  const key = normRoomKey(room);
+  if (!key) return;
+  let a = false, r = false, c = false;
+  data.attendings.forEach((row) => {
+    const kept = cellNames(row.rooms).filter((rm) => normRoomKey(rm) !== key).join(", ");
+    if (kept !== (row.rooms || "")) { row.rooms = kept; a = true; }
+  });
+  data.residents.forEach((row) => { if (row.room && normRoomKey(row.room) === key) { row.room = ""; r = true; } });
+  data.crnas.forEach((row) => { if (row.room && normRoomKey(row.room) === key) { row.room = ""; c = true; } });
+  if (a) saveTable("attendings");
+  if (r) saveTable("residents");
+  if (c) saveTable("crnas");
+  renderAll();
+  renderStats();
 }
 
 /* ------------------------------ Import / Export ------------------------ */
