@@ -268,6 +268,18 @@ function renderTable(id) {
       if (id === "attendings" && c.key === "rooms" && val) {
         for (const rm of cellNames(val)) { const t = roomInfo(rm).tag; if (t) { td.classList.add("tag-" + t); break; } }
       }
+      // Attending covering exactly one room -> light green + that room under the name
+      if (id === "attendings" && c.key === "name") {
+        const rms = cellNames(row.rooms);
+        if (rms.length === 1) { td.classList.add("roster-light-green"); td.dataset.role = rms[0]; }
+      }
+      // Free (unassigned) resident/CRNA -> light green if on call, regular green if not
+      if (id === "residents" && c.key === "name" && row.name && !(row.room || "").trim()) {
+        td.classList.add(/^R6/i.test((row.role || "").trim()) ? "roster-green" : "roster-light-green");
+      }
+      if (id === "crnas" && c.key === "name" && row.name && !(row.room || "").trim()) {
+        td.classList.add(row.stuck ? "roster-green" : "roster-light-green");
+      }
       tr.appendChild(td);
     });
     const act = document.createElement("td");

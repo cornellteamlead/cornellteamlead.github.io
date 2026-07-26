@@ -204,6 +204,9 @@ html, body {
 
 /* Staff whose room is closing (yellow dot) */
 .roster-closing { background: #ffe9a8; }
+/* Free / available highlights */
+.roster-light-green { background: #d9f7de; }  /* attending with one room; free & on-call */
+.roster-green       { background: #8fdd97; }  /* free & not on call */
 
 /* Past 8 PM */
 .past8-badge { font-size: 0.8rem; }

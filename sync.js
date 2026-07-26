@@ -22,6 +22,7 @@
   let applyRemoteFn = null;
   let saveTimer = null;
   let suppress = false; // don't echo a remote apply back up to the cloud
+  let changedDuringInit = false; // user edited before the initial pull returned
 
   function headers(extra) {
     return Object.assign({ apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }, extra || {});
@@ -65,10 +66,15 @@
     async init(applyFn) {
       applyRemoteFn = applyFn;
       if (!enabled()) return;
+      changedDuringInit = false;
       status("☁ Connecting…");
       try {
         const remote = await pull();
-        if (remote) {
+        if (changedDuringInit) {
+          // The user edited locally before the pull returned — keep their work,
+          // push it up instead of overwriting it with the older cloud copy.
+          await push(collect());
+        } else if (remote) {
           suppress = true;
           try { applyRemoteFn(remote); } finally { suppress = false; }
         } else {
@@ -81,6 +87,7 @@
     },
     save() {
       if (!enabled() || suppress) return;
+      changedDuringInit = true;
       status("☁ Saving…");
       clearTimeout(saveTimer);
       saveTimer = setTimeout(async () => {
