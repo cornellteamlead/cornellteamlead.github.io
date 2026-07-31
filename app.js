@@ -42,7 +42,7 @@ const TABLES = {
       { type: "arrow",    label: "" },
       { key: "fivepm",    label: "5:00 PM" },
       { key: "eightpm",   label: "8:00 PM",       cond: "show8pm" },
-      { key: "dinner",    label: "Dinner" },
+      { key: "dinner",    label: "Dinner",        cond: "dinner" },
       { type: "spacer",   label: "" },
     ],
     seed() {
@@ -80,6 +80,7 @@ const TABLES = {
     title: "CRNAs",
     storageKey: "coverageBoard.crnas.v2",
     columns: [
+      { key: "role", label: "Role" },
       { key: "name", label: "CRNAs" },
       { key: "room", label: "Room" },
       { type: "dinner", label: "Dinner", cond: "dinner" },
@@ -262,7 +263,6 @@ function renderTable(id) {
       if (id === "main" && c.key === "fivepm" && !val && row.status === "ongoing") {
         td.classList.add("needs-5pm");
       }
-      if (id === "crnas" && c.key === "name" && row.stuck) td.dataset.role = "stuck";
       // Reflect room state into the roster panels:
       // - staff in a closing (yellow) room -> yellow highlight
       // - a room's specialty color -> highlight its room number in the panels
@@ -522,6 +522,7 @@ function toggleDinnerMode() {
   document.body.classList.toggle("dinner-mode");
   const b = document.getElementById("dinnerBtn");
   if (b) b.classList.toggle("active", document.body.classList.contains("dinner-mode"));
+  renderTable("main");
   renderTable("residents");
   renderTable("crnas");
 }
@@ -605,7 +606,7 @@ function syncStuckCrnas() {
   data.main.forEach((r) => {
     cellNames(r.fivepm).forEach((name) => {
       if (dirCrnas.some((d) => nameMatch(d, name)) && !inPanel(name)) {
-        data.crnas.push(blank(TABLES.crnas.columns, { name, room: r.room, stuck: true }));
+        data.crnas.push(blank(TABLES.crnas.columns, { role: "stuck", name, room: r.room, stuck: true }));
         added = true;
       }
     });
@@ -758,7 +759,7 @@ function staffRoleLabel(name) {
   const res = data.residents.find((r) => r.name && nameMatch(r.name, name));
   if (res) return /^R6/i.test((res.role || "").trim()) ? "stuck" : (res.role || "");
   const crn = data.crnas.find((r) => r.name && nameMatch(r.name, name));
-  if (crn) return crn.stuck ? "CRNA-stuck" : "CRNA - 8pm";
+  if (crn) return crn.stuck ? "CRNA-stuck" : ("CRNA - " + (crn.role || "8pm"));
   const dirC = (window.DIRECTORY && window.DIRECTORY.crnas) || [];
   if (dirC.some((c) => nameMatch(c, name))) return "CRNA";
   return "";
@@ -868,7 +869,7 @@ function updateRostersFromRooms(source, silent) {
     return m ? m.room : "";
   };
   data.residents.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
-  data.crnas.forEach((row) => { if (row.name) { const r = findRoom(row.name); if (r) row.room = r; } });
+  data.crnas.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
   updateDinnerFlags();
   renderAll(); renderStats();

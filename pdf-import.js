@@ -236,7 +236,7 @@
       const tokens = p.rooms.split(",").map((s) => s.trim());
       let room = canonRoom(tokens.find((t) => !/^L-?5-?IR$/i.test(t)) || "");
       if (/^breaks$/i.test(room)) room = "";
-      return { name: disp(p), room };
+      return { name: disp(p), room, role: "8pm" };
     });
 
     return { date, rooms, attendings, residents, crnas, directory };
@@ -270,17 +270,26 @@
     data.residents = parsed.residents.map((a) => blank(TABLES.residents.columns, { role: a.role, name: a.name }));
     saveTable("residents");
     data.crnas = parsed.crnas.length
-      ? parsed.crnas.map((c) => blank(TABLES.crnas.columns, { name: c.name, room: c.room }))
+      ? parsed.crnas.map((c) => blank(TABLES.crnas.columns, { role: c.role, name: c.name, room: c.room }))
       : TABLES.crnas.seed();
     saveTable("crnas");
     if (parsed.directory) {
       localStorage.setItem("coverageBoard.directory.v1", JSON.stringify(parsed.directory));
       window.DIRECTORY = parsed.directory;
     }
+    // Initial roster rooms: attendings from the Attending column; residents and
+    // CRNAs from where they currently are (Current Staff column).
+    data.attendings.forEach((row) => {
+      if (!row.name) return;
+      const rooms = data.main.filter((m) => cellNames(m.attending).some((n) => nameMatch(n, row.name))).map((m) => m.room);
+      row.rooms = [...new Set(rooms)].join(", ");
+    });
+    const roomOfStaff = (nm) => { const m = data.main.find((mm) => cellNames(mm.staff).some((n) => nameMatch(n, nm))); return m ? m.room : ""; };
+    data.residents.forEach((row) => { if (row.name && !(row.room || "").trim()) row.room = roomOfStaff(row.name); });
+    data.crnas.forEach((row) => { if (row.name && !(row.room || "").trim()) row.room = roomOfStaff(row.name); });
+    saveTable("attendings"); saveTable("residents"); saveTable("crnas");
     renderAll();
     if (typeof renderStats === "function") renderStats();
-    // Auto-fill the roster room columns (attendings' rooms, residents/CRNAs' rooms) from the board.
-    if (typeof updateRostersFromRooms === "function") updateRostersFromRooms("fivepm", true);
   }
 
   /* ================= Preview modal ================= */
