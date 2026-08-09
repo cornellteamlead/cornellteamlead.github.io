@@ -603,9 +603,13 @@ function syncStuckCrnas() {
   const dirCrnas = (window.DIRECTORY && window.DIRECTORY.crnas) || [];
   const inPanel = (name) => data.crnas.some((r) => r.name && nameMatch(r.name, name));
   let added = false;
+  const isResident = (name) =>
+    ((window.DIRECTORY && window.DIRECTORY.residents) || []).some((d) => nameMatch(d, name)) ||
+    data.residents.some((rr) => rr.name && nameMatch(rr.name, name));
   data.main.forEach((r) => {
     cellNames(r.fivepm).forEach((name) => {
-      if (dirCrnas.some((d) => nameMatch(d, name)) && !inPanel(name)) {
+      // Skip anyone who is a resident — they belong in the Residents panel, not CRNAs.
+      if (dirCrnas.some((d) => nameMatch(d, name)) && !inPanel(name) && !isResident(name)) {
         data.crnas.push(blank(TABLES.crnas.columns, { role: "stuck", name, room: r.room, stuck: true }));
         added = true;
       }
@@ -740,9 +744,10 @@ function nameMatch(a, b) {
   const na = normName(a), nb = normName(b);
   if (!na || !nb) return false;
   if (na === nb) return true;
-  // Allow a short leading initial prefix, e.g. "Vu" ≈ "DVu", "Scarpa" ≈ "JuScarpa".
-  if (na.endsWith(nb) && na.length - nb.length <= 2) return true;
-  if (nb.endsWith(na) && nb.length - na.length <= 2) return true;
+  // Allow a single leading initial prefix only, e.g. "Vu" ≈ "DVu", "Lee" ≈ "SLee".
+  // (Kept to 1 char so unrelated names like "Ng" and "Sung" don't collide.)
+  if (na.endsWith(nb) && na.length - nb.length === 1) return true;
+  if (nb.endsWith(na) && nb.length - na.length === 1) return true;
   return false;
 }
 function cellNames(cell) {
