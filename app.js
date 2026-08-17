@@ -270,7 +270,8 @@ function renderTable(id) {
         td.classList.add("roster-closing");
       }
       if ((id === "residents" || id === "crnas") && c.key === "room" && val) {
-        const t = roomInfo(val).tag; if (t) td.classList.add("tag-" + t);
+        if (cellNames(val).length > 1) { td.classList.add("double-booked"); td.title = "Double-booked!"; }
+        else { const t = roomInfo(val).tag; if (t) td.classList.add("tag-" + t); }
       }
       if (id === "attendings" && c.key === "rooms" && val) {
         for (const rm of cellNames(val)) { const t = roomInfo(rm).tag; if (t) { td.classList.add("tag-" + t); break; } }
@@ -869,12 +870,12 @@ function updateRostersFromRooms(source, silent) {
     row.rooms = [...new Set(rooms)].join(", ");
   });
   // A resident/CRNA's room = where they are in the chosen column (5 PM or 8 PM).
-  const findRoom = (name) => {
-    const m = data.main.find((mm) => cellNames(mm[source]).some((n) => nameMatch(n, name)));
-    return m ? m.room : "";
+  const findRooms = (name) => {
+    const rooms = data.main.filter((mm) => cellNames(mm[source]).some((n) => nameMatch(n, name))).map((mm) => mm.room);
+    return [...new Set(rooms)].join(", "); // multiple = double-booked
   };
-  data.residents.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
-  data.crnas.forEach((row) => { if (row.name) row.room = findRoom(row.name); });
+  data.residents.forEach((row) => { if (row.name) row.room = findRooms(row.name); });
+  data.crnas.forEach((row) => { if (row.name) row.room = findRooms(row.name); });
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
   updateDinnerFlags();
   renderAll(); renderStats();

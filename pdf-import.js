@@ -284,7 +284,7 @@
       const rooms = data.main.filter((m) => cellNames(m.attending).some((n) => nameMatch(n, row.name))).map((m) => m.room);
       row.rooms = [...new Set(rooms)].join(", ");
     });
-    const roomOfStaff = (nm) => { const m = data.main.find((mm) => cellNames(mm.staff).some((n) => nameMatch(n, nm))); return m ? m.room : ""; };
+    const roomOfStaff = (nm) => { const rooms = data.main.filter((mm) => cellNames(mm.staff).some((n) => nameMatch(n, nm))).map((mm) => mm.room); return [...new Set(rooms)].join(", "); };
     data.residents.forEach((row) => { if (row.name && !(row.room || "").trim()) row.room = roomOfStaff(row.name); });
     data.crnas.forEach((row) => { if (row.name && !(row.room || "").trim()) row.room = roomOfStaff(row.name); });
     saveTable("attendings"); saveTable("residents"); saveTable("crnas");

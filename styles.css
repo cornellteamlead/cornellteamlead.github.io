@@ -206,6 +206,20 @@ html, body {
 .roster-closing { background: #ffe9a8; }
 /* Ongoing room with nobody assigned at 5 PM */
 .needs-5pm { background: #ffcccc; }
+/* Resident/CRNA booked in more than one room — very loud */
+.double-booked {
+  background: #ff2d2d !important;
+  color: #fff !important;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 4px;
+  animation: dbpulse 0.9s ease-in-out infinite;
+}
+.double-booked::before { content: "⚠ "; }
+@keyframes dbpulse {
+  0%, 100% { background: #ff2d2d; box-shadow: 0 0 0 0 rgba(255, 45, 45, 0.6); }
+  50%      { background: #b30000; box-shadow: 0 0 0 3px rgba(255, 45, 45, 0.35); }
+}
 /* Free / available highlights */
 .roster-light-green { background: #d9f7de; }  /* attending with one room; free & on-call */
 .roster-green       { background: #8fdd97; }  /* free & not on call */
