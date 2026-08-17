@@ -369,8 +369,14 @@ function removeRoomFromRosters(room) {
     const kept = cellNames(row.rooms).filter((rm) => normRoomKey(rm) !== key).join(", ");
     if (kept !== (row.rooms || "")) { row.rooms = kept; a = true; }
   });
-  data.residents.forEach((row) => { if (row.room && normRoomKey(row.room) === key) { row.room = ""; r = true; } });
-  data.crnas.forEach((row) => { if (row.room && normRoomKey(row.room) === key) { row.room = ""; c = true; } });
+  data.residents.forEach((row) => {
+    const kept = cellNames(row.room).filter((rm) => normRoomKey(rm) !== key).join(", ");
+    if (kept !== (row.room || "")) { row.room = kept; r = true; }
+  });
+  data.crnas.forEach((row) => {
+    const kept = cellNames(row.room).filter((rm) => normRoomKey(rm) !== key).join(", ");
+    if (kept !== (row.room || "")) { row.room = kept; c = true; }
+  });
   if (a) saveTable("attendings");
   if (r) saveTable("residents");
   if (c) saveTable("crnas");
