@@ -283,6 +283,13 @@ th.check-head { text-align: center; white-space: normal; font-size: 0.64rem; pad
 }
 #notes:focus { border-color: var(--focus); box-shadow: 0 0 0 3px var(--accent-soft); }
 
+/* ---------- Reference timeline (small, tucked at the bottom) ---------- */
+.timeline-section { grid-column: 1 / -1; margin-top: 6px; }
+.timeline-section h2 { font-size: 0.82rem; color: var(--header-bg); margin: 0 0 4px; }
+.timeline { list-style: none; margin: 0; padding: 0; font-size: 0.7rem; color: var(--muted); }
+.timeline li { display: flex; gap: 8px; padding: 1px 0; line-height: 1.35; }
+.timeline .t { flex: 0 0 46px; font-weight: 700; color: var(--text); text-align: right; }
+
 /* ---------- Arrow cell ---------- */
 .arrow-cell { width: 26px; text-align: center; padding: 0 !important; }
 .arrow-btn {
