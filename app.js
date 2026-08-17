@@ -250,8 +250,11 @@ function renderTable(id) {
       td.dataset.key = c.key;
       if (c.cls) td.classList.add(c.cls);
       const val = row[c.key] || "";
-      td.textContent = val;
-      if (!val) td.classList.add("empty");
+      const hasMove = (id === "residents" || id === "crnas") && c.key === "room" && (row.moveTo || "").trim();
+      const display = hasMove ? ((val ? val + " " : "") + "→ " + row.moveTo) : val;
+      td.textContent = display;
+      if (!display) td.classList.add("empty");
+      if (hasMove) td.classList.add("planned-move");
       if (id === "main" && (c.key === "attending" || c.key === "fivepm")) {
         const lbl = cellRoleLabel(c.key, val);
         if (lbl) td.dataset.role = lbl;
@@ -269,9 +272,9 @@ function renderTable(id) {
       if ((id === "residents" || id === "crnas") && c.key === "name" && row.room && roomInfo(row.room).status === "closing") {
         td.classList.add("roster-closing");
       }
-      if ((id === "residents" || id === "crnas") && c.key === "room" && val) {
+      if ((id === "residents" || id === "crnas") && c.key === "room") {
         if (cellNames(val).length > 1) { td.classList.add("double-booked"); td.title = "Double-booked!"; }
-        else { const t = roomInfo(val).tag; if (t) td.classList.add("tag-" + t); }
+        else if (val && !hasMove) { const t = roomInfo(val).tag; if (t) td.classList.add("tag-" + t); }
       }
       if (id === "attendings" && c.key === "rooms" && val) {
         for (const rm of cellNames(val)) { const t = roomInfo(rm).tag; if (t) { td.classList.add("tag-" + t); break; } }
@@ -336,6 +339,14 @@ function onEdit(e) {
     }
     if (e.type === "blur" && table === "main" && key === "dinner") updateDinnerFlags();
     if (e.type === "blur" && table === "main" && (key === "attending" || key === "fivepm")) autoSync5pm();
+    // Roster room cell: "A5 → G7" plans a move; store the destination separately.
+    if (e.type === "blur" && (table === "residents" || table === "crnas") && key === "room") {
+      const parts = value.split(/\s*(?:→|->)\s*/);
+      arr[idx].moveTo = parts.length > 1 ? parts[parts.length - 1].trim() : "";
+      arr[idx].room = parts.length > 1 ? parts.slice(0, -1).join(" ").trim() : value;
+      saveTable(table);
+      renderTable(table);
+    }
   }
 }
 
@@ -372,10 +383,12 @@ function removeRoomFromRosters(room) {
   data.residents.forEach((row) => {
     const kept = cellNames(row.room).filter((rm) => normRoomKey(rm) !== key).join(", ");
     if (kept !== (row.room || "")) { row.room = kept; r = true; }
+    if (row.moveTo && normRoomKey(row.moveTo) === key) { row.moveTo = ""; r = true; }
   });
   data.crnas.forEach((row) => {
     const kept = cellNames(row.room).filter((rm) => normRoomKey(rm) !== key).join(", ");
     if (kept !== (row.room || "")) { row.room = kept; c = true; }
+    if (row.moveTo && normRoomKey(row.moveTo) === key) { row.moveTo = ""; c = true; }
   });
   if (a) saveTable("attendings");
   if (r) saveTable("residents");
@@ -880,8 +893,9 @@ function updateRostersFromRooms(source, silent) {
     const rooms = data.main.filter((mm) => cellNames(mm[source]).some((n) => nameMatch(n, name))).map((mm) => mm.room);
     return [...new Set(rooms)].join(", "); // multiple = double-booked
   };
-  data.residents.forEach((row) => { if (row.name) row.room = findRooms(row.name); });
-  data.crnas.forEach((row) => { if (row.name) row.room = findRooms(row.name); });
+  const clearArrivedMove = (row) => { if (row.moveTo && cellNames(row.room).some((rm) => normRoomKey(rm) === normRoomKey(row.moveTo))) row.moveTo = ""; };
+  data.residents.forEach((row) => { if (row.name) row.room = findRooms(row.name); clearArrivedMove(row); });
+  data.crnas.forEach((row) => { if (row.name) row.room = findRooms(row.name); clearArrivedMove(row); });
   saveTable("attendings"); saveTable("residents"); saveTable("crnas");
   updateDinnerFlags();
   renderAll(); renderStats();

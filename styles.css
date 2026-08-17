@@ -206,6 +206,9 @@ html, body {
 .roster-closing { background: #ffe9a8; }
 /* Ongoing room with nobody assigned at 5 PM */
 .needs-5pm { background: #ffcccc; }
+/* Planned move: "A5 → G7" (current room → where they're headed) */
+.planned-move { color: #1560a8; font-style: italic; font-weight: 600; background: #e8f1fb; }
+
 /* Resident/CRNA booked in more than one room — very loud */
 .double-booked {
   background: #ff2d2d !important;
